@@ -8,6 +8,7 @@ use XML::XPath;
 use XML::XPath::XMLParser;
 use Date::Parse;
 use POSIX qw(strftime);
+use Win32;
 
 my $filename = $ARGV[0];
 
@@ -242,8 +243,10 @@ for my $class (sort keys %failedClasses){
 }
 
 my $built = strftime("%Y-%m-%d %H:%M:%S", localtime);
+my $logname = Win32::LoginName;
 
 $html .= qq(
+		<br />
 		<table style="width:1200px;border:0px;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:10px;">
 			<tr style="background-color:#eee;">
 				<td style="border:0px;border-collapse:collapse;padding:5px;text-align:left;"><b>Date:</b></td>
@@ -255,7 +258,7 @@ $html .= qq(
 			</tr>
 			<tr style="background-color:#eee;">
 				<td style="border:0px;border-collapse:collapse;padding:5px;text-align:left;"><b>Author:</b></td>
-				<td style="border:0px;border-collapse:collapse;padding:5px;text-align:left">Dmitry Lapshov</td>
+				<td style="border:0px;border-collapse:collapse;padding:5px;text-align:left">$logname</td>
 			</tr>
 		</table>
 	</body>
