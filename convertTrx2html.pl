@@ -8,6 +8,7 @@ use XML::XPath;
 use XML::XPath::XMLParser;
 use Date::Parse;
 use POSIX qw(strftime);
+use HTML::Entities;
 use Win32;
 
 my $filename = $ARGV[0];
@@ -120,7 +121,7 @@ $html .= qq(
 
 my $e = 0;
 for my $class (sort keys %failedClasses){
-	my $bg = $e % 2 ? '#fff' : '#eee';
+	my $bg = $e % 2 ? '#eee' : '#fff';
 	my @methods = grep{$_ -> {className} eq $class} @table;
 	my $total = scalar @methods;
 	my $passed = scalar grep{$_ -> {className} eq $class && $_ -> {outcome} eq 'Passed'} @methods;
@@ -212,10 +213,10 @@ for my $class (sort keys %failedClasses){
 	my @methods = sort{$a -> {testMethod} cmp $b -> {testMethod}} grep{$_ -> {className} eq $class && $_ -> {outcome} eq 'Failed'} @table;
 	my $e = 0;
 	for my $method (@methods){
-		my $bg = $e % 2 ? '#fff' : '#eee';
+		my $bg = $e % 2 ? '#eee' : '#fff';
 		my $test_method = $method -> {testMethod};
-		my $message = $method -> {message};
-		my $stackTrace = $method -> {stackTrace};
+		my $message = encode_entities($method -> {message});
+		my $stackTrace = encode_entities($method -> {stackTrace});
 		my $duration = $method -> {duration};
 		$html .= qq(
 			<tr style="background-color:$bg;">
