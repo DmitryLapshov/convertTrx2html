@@ -13,7 +13,7 @@ use Win32;
 
 my $filename = $ARGV[0];
 
-die 'Usage: convertTrx2html.pl abc.trx' unless defined $filename;
+die 'Usage: perl convertTrx2html.pl abc.trx > report.html' unless defined $filename;
 
 my $xp = XML::XPath -> new(filename => $filename);
 
@@ -23,14 +23,14 @@ my $finish = str2time($times[0] -> getAttribute('finish'));
 my $summary_duration = strftime("%H:%M:%S", gmtime($finish - $start));
 
 my @table = ();
-for my $test ($xp -> findnodes('/TestRun/TestDefinitions/UnitTest')){
+for my $test ($xp -> findnodes('/TestRun/TestDefinitions/UnitTest')) {
 	my @executions = $test -> findnodes('./Execution');
 	my $executionID = $executions[0] -> getAttribute('id');
 	my @testMethods = $test -> findnodes('./TestMethod');
 	my @testResults = $xp -> findnodes('/TestRun/Results/UnitTestResult[@executionId = "'.$executionID.'"]');
 	my @messages = $testResults[0] -> findnodes('./Output/ErrorInfo/Message');
 	my @stackTraces = $testResults[0] -> findnodes('./Output/ErrorInfo/StackTrace');
-	
+
 	my $row = {
 		className => $testMethods[0] -> getAttribute('className'),
 		testMethod => $testMethods[0] -> getAttribute('name'),
@@ -39,7 +39,7 @@ for my $test ($xp -> findnodes('/TestRun/TestDefinitions/UnitTest')){
 		stackTrace => scalar @stackTraces ? $stackTraces[0] -> string_value : '',
 		duration => $testResults[0] -> getAttribute('duration')
 	};
-	
+
 	push @table, $row;
 }
 
@@ -64,7 +64,7 @@ my $html = qq(
 			<caption style="padding:5px;text-align:left;"><a name="Summary"><b>Summary</b></a></caption>
 			<tr>
 				<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Percent</th>
-				<th style="width:45%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Status</th> 
+				<th style="width:45%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Status</th>
 				<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Total</th>
 				<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Passed</th>
 				<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Failed</th>
@@ -74,12 +74,12 @@ my $html = qq(
 );
 
 my $status;
-if(int($summary_percent) == 100){
+if(int($summary_percent) == 100) {
 	$status = qq(
 		<tr><td style="width:100%;height:7px;background-color:green;"></td></tr>
 	);
 }
-elsif(int($summary_percent) == 0){
+elsif(int($summary_percent) == 0) {
 	$status = qq(
 		<tr><td style="width:100%;height:7px;background-color:red;"></td></tr>
 	);
@@ -97,7 +97,7 @@ $html .= qq(
 					<table style="width:100%;border:0px;border-collapse:collapse;">
 						$status
 					</table>
-				</td> 
+				</td>
 				<td style="border:1px solid black;border-collapse:collapse;padding:5px;">$summary_total</td>
 				<td style="border:1px solid black;border-collapse:collapse;padding:5px;">$summary_passed</td>
 				<td style="border:1px solid black;border-collapse:collapse;padding:5px;">$summary_failed</td>
@@ -106,47 +106,51 @@ $html .= qq(
 			</tr>
 		</table>
 		<br />
-		<table style="width:1200px;border:1px solid black;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
-			<caption style="padding:5px;text-align:left;"><b>Failed Test Classes</b></caption>
-			<tr>
-				<th style="width:50%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Class Name</th>
-				<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Percent</th> 
-				<th style="width:10%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Status</th>
-				<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Total</th>
-				<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Passed</th>
-				<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Failed</th>
-				<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Ignored</th>
-			</tr>
 );
 
-my $e = 0;
-for my $class (sort keys %failedClasses){
-	my $bg = $e % 2 ? '#eee' : '#fff';
-	my @methods = grep{$_ -> {className} eq $class} @table;
-	my $total = scalar @methods;
-	my $passed = scalar grep{$_ -> {className} eq $class && $_ -> {outcome} eq 'Passed'} @methods;
-	my $failed = scalar grep{$_ -> {className} eq $class && $_ -> {outcome} eq 'Failed'} @methods;
-	my $ignored = $total - $passed - $failed;
-	my $percent = sprintf("%.2f", $passed / $total * 100);
-	if(int($percent) == 100){
-		$status = qq(
-			<tr><td style="width:100%;height:7px;background-color:green;"></td></tr>
-		);
-	}
-	elsif(int($percent) == 0){
-		$status = qq(
-			<tr><td style="width:100%;height:7px;background-color:red;"></td></tr>
-		);
-	}
-	else{
-		$status = qq(
-			<tr><td style="width:$percent%;height:7px;background-color:green;"></td><td style="background-color:red;height:7px;"></td></tr>
-		);
-	}
+if(keys %failedClasses) {
 	$html .= qq(
+	<table style="width:1200px;border:1px solid black;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
+		<caption style="padding:5px;text-align:left;"><b>Failed Test Classes</b></caption>
+		<tr>
+			<th style="width:50%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Class Name</th>
+			<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Percent</th>
+			<th style="width:10%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Status</th>
+			<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Total</th>
+			<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Passed</th>
+			<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Failed</th>
+			<th style="width:5%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Ignored</th>
+		</tr>
+	);
+
+	my $e = 0;
+	for my $class (sort keys %failedClasses) {
+		my $bg = $e % 2 ? '#eee' : '#fff';
+		my @methods = grep{$_ -> {className} eq $class} @table;
+		my $total = scalar @methods;
+		my $passed = scalar grep{$_ -> {className} eq $class && $_ -> {outcome} eq 'Passed'} @methods;
+		my $failed = scalar grep{$_ -> {className} eq $class && $_ -> {outcome} eq 'Failed'} @methods;
+		my $ignored = $total - $passed - $failed;
+		my $percent = sprintf("%.2f", $passed / $total * 100);
+		if(int($percent) == 100) {
+			$status = qq(
+				<tr><td style="width:100%;height:7px;background-color:green;"></td></tr>
+			);
+		}
+		elsif(int($percent) == 0) {
+			$status = qq(
+				<tr><td style="width:100%;height:7px;background-color:red;"></td></tr>
+			);
+		}
+		else{
+			$status = qq(
+				<tr><td style="width:$percent%;height:7px;background-color:green;"></td><td style="background-color:red;height:7px;"></td></tr>
+			);
+		}
+		$html .= qq(
 			<tr style="background-color:$bg;">
 				<td style="border:1px solid black;border-collapse:collapse;padding:5px;"><a href="#$class">$class</a></td>
-				<td style="border:1px solid black;border-collapse:collapse;padding:5px;">$percent%</td> 
+				<td style="border:1px solid black;border-collapse:collapse;padding:5px;">$percent%</td>
 				<td style="border:1px solid black;border-collapse:collapse;padding:5px;">
 					<table style="width:100%;border:0px;border-collapse:collapse;">
 						<tr>
@@ -158,13 +162,17 @@ for my $class (sort keys %failedClasses){
 				<td style="border:1px solid black;border-collapse:collapse;padding:5px;">$failed</td>
 				<td style="border:1px solid black;border-collapse:collapse;padding:5px;">$ignored</td>
 			</tr>
+		);
+		$e++;
+	}
+
+	$html .= qq(
+		</table>
+		<br />
 	);
-	$e++;
 }
 
 $html .= qq(
-		</table>
-		<br />
 		<table style="width:1200px;border:1px solid black;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
 			<caption style="padding:5px;text-align:left;"><b>TOP 5 Slower Methods</b></caption>
 			<tr>
@@ -174,8 +182,8 @@ $html .= qq(
 			</tr>
 );
 
-for(1..5){
-	if(my $method = $table_by_duration[-$_]){
+for(1..5) {
+	if(my $method = $table_by_duration[-$_]) {
 		my $method_name = $method -> {className}.'.'.$method -> {testMethod};
 		my $bg = $_ % 2 ? '#fff' : '#eee';
 		my $color = $method -> {outcome} eq 'Passed' ? 'green' : 'red';
@@ -189,9 +197,9 @@ for(1..5){
 							<td style="border:0px;border-collapse:collapse;width:100%;background-color:$color;height:7px;"></td>
 						</tr>
 					</table>
-				</td> 
+				</td>
 				<td style="border:1px solid black;border-collapse:collapse;padding:5px;text-align:center;">$duration</td>
-			</tr>	
+			</tr>
 		);
 	}
 }
@@ -200,7 +208,7 @@ $html .= qq(
 		<br />
 );
 
-for my $class (sort keys %failedClasses){
+for my $class (sort keys %failedClasses) {
 	$html .= qq(
 		<table id="$class" style="width:1200px;border:1px solid black;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
 			<caption style="padding:5px;text-align:left;"><a name="$class"><b>$class</b></a></caption>
@@ -208,11 +216,11 @@ for my $class (sort keys %failedClasses){
 				<th style="width:35%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Test Method</th>
 				<th style="width:55%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Output</th>
 				<th style="width:10%;border:1px solid black;border-collapse:collapse;background-color:#555555;color:white;padding:5px;">Duration</th>
-			</tr>		
+			</tr>
 	);
 	my @methods = sort{$a -> {testMethod} cmp $b -> {testMethod}} grep{$_ -> {className} eq $class && $_ -> {outcome} eq 'Failed'} @table;
 	my $e = 0;
-	for my $method (@methods){
+	for my $method (@methods) {
 		my $bg = $e % 2 ? '#eee' : '#fff';
 		my $test_method = $method -> {testMethod};
 		my $message = encode_entities($method -> {message});
@@ -230,7 +238,7 @@ for my $class (sort keys %failedClasses){
 							<td style="border:0px;border-collapse:collapse;padding:5px;">$stackTrace</td>
 						</tr>
 					</table>
-				</td> 
+				</td>
 				<td style="border:1px solid black;border-collapse:collapse;padding:5px;text-align:center;">$duration</td>
 			</tr>
 		);
