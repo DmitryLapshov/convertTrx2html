@@ -1,7 +1,7 @@
 convertTrx2html.pl
 ===============
 
-A simple tool to convert VS2012 Unit Test Results '.trx' files into html which would be properly displayed by Gmail web interfaces.
+A simple tool to convert VS2012 Unit Test Results '.trx' files into html which would be properly displayed in Gmail.
 
 Usage:
 perl convertTrx2html.pl path/to/abc.trx > report.html
